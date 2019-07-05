@@ -8,7 +8,6 @@ import org.almibe.ligature.*
 import org.almibe.ligature.parser.nquads.NQuadsBaseListener
 import org.almibe.ligature.parser.nquads.NQuadsLexer
 import org.almibe.ligature.parser.nquads.NQuadsParser
-import org.almibe.ligature.parser.ntriples.NTriplesParser
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ErrorNode
@@ -33,11 +32,11 @@ private class NQuadsListener : NQuadsBaseListener() {
     lateinit var currentQuad: TempQuad
     val blankNodes = HashMap<String, BlankNode>()
 
-    override fun enterTriple(ctx: NTriplesParser.TripleContext) {
+    override fun enterNQuadsDoc(ctx: NQuadsParser.NQuadsDocContext) {
         currentQuad = TempQuad()
     }
 
-    override fun exitSubject(ctx: NTriplesParser.SubjectContext) {
+    override fun exitSubject(ctx: NQuadsParser.SubjectContext) {
         currentQuad.subject = when {
             ctx.IRIREF() != null -> handleIRI(ctx.IRIREF().text)
             ctx.BLANK_NODE_LABEL() != null -> handleBlankNode(ctx.BLANK_NODE_LABEL().text)
@@ -45,11 +44,11 @@ private class NQuadsListener : NQuadsBaseListener() {
         }
     }
 
-    override fun exitPredicate(ctx: NTriplesParser.PredicateContext) {
+    override fun exitPredicate(ctx: NQuadsParser.PredicateContext) {
         currentQuad.predicate = handleIRI(ctx.IRIREF().text)
     }
 
-    override fun exitObject(ctx: NTriplesParser.ObjectContext) {
+    override fun exitObject(ctx: NQuadsParser.ObjectContext) {
         when {
             ctx.IRIREF() != null -> handleObject(handleIRI(ctx.IRIREF().text))
             ctx.BLANK_NODE_LABEL() != null -> handleObject(handleBlankNode(ctx.BLANK_NODE_LABEL().text))
@@ -70,7 +69,7 @@ private class NQuadsListener : NQuadsBaseListener() {
         }
     }
 
-    internal fun handleLiteral(literal: NTriplesParser.LiteralContext) {
+    internal fun handleLiteral(literal: NQuadsParser.LiteralContext) {
         val value = if (literal.STRING_LITERAL_QUOTE().text.length >= 2) {
             literal.STRING_LITERAL_QUOTE().text.substring(1, literal.STRING_LITERAL_QUOTE().text.length-1)
         } else {
@@ -81,7 +80,7 @@ private class NQuadsListener : NQuadsBaseListener() {
             literal.IRIREF() != null -> TypedLiteral(value, handleIRI(literal.IRIREF().text))
             else -> TypedLiteral(value)
         }
-        model.addStatement(currentQuad.subject, currentQuad.predicate, result)
+        model.add(Quad(currentQuad.subject, currentQuad.predicate, result))
     }
 
     fun handleBlankNode(blankNode: String): BlankNode {
@@ -100,7 +99,7 @@ private class NQuadsListener : NQuadsBaseListener() {
     }
 
     fun handleObject(objectVertex: Object) {
-        model.addStatement(currentQuad.subject, currentQuad.predicate, objectVertex)
+        model.add(Quad(currentQuad.subject, currentQuad.predicate, objectVertex))
     }
 
     internal class TempQuad {
