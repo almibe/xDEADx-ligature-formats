@@ -14,7 +14,7 @@ import java.io.Reader
 import java.util.*
 
 class Turtle {
-    fun parse(reader: Reader): Collection<Quad> {
+    fun loadTurtle(reader: Reader): Set<Quad> {
         val stream = CharStreams.fromReader(reader)
         val lexer = ModalTurtleLexer(stream)
         val tokens = CommonTokenStream(lexer)
@@ -32,14 +32,14 @@ val firstIRI = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#first")
 val restIRI = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest")
 val nilIRI = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
 
-private class TurtleDocVisitor: TurtleBaseVisitor<Collection<Quad>>() {
+private class TurtleDocVisitor: TurtleBaseVisitor<Set<Quad>>() {
     val model = mutableSetOf<Quad>()
     val prefixes: MutableMap<String, String> = mutableMapOf()
     lateinit var base: String
     var anonymousCounter = 0
     val blankNodes = HashMap<String, BlankNode>()
 
-    override fun visitTurtleDoc(ctx: Turtle.TurtleDocContext): Collection<Quad> {
+    override fun visitTurtleDoc(ctx: Turtle.TurtleDocContext): Set<Quad> {
         ctx.statement().forEach { statement ->
             when {
                 statement.directive() != null -> handleDirective(statement.directive())
@@ -107,7 +107,7 @@ private class TurtleDocVisitor: TurtleBaseVisitor<Collection<Quad>>() {
             }
             predicateObjectList.forEach { (predicate, objects) ->
                 objects.forEach { `object` ->
-                    model.addStatement(subject, predicate, `object`)
+                    model.add(Quad(subject, predicate, `object`))
                 }
             }
         } else if (triplesContext.blankNodePropertyList() != null) {
@@ -120,7 +120,7 @@ private class TurtleDocVisitor: TurtleBaseVisitor<Collection<Quad>>() {
                 }
                 predicateObjectList.forEach { (predicate, objects) ->
                     objects.forEach { `object` ->
-                        model.addStatement(blankNode, predicate, `object`)
+                        model.add(Quad(blankNode, predicate, `object`))
                     }
                 }
             }
@@ -246,7 +246,7 @@ private class TurtleDocVisitor: TurtleBaseVisitor<Collection<Quad>>() {
             val predicate = handleTurtleIRI(verbObjectList.verb().predicate().iri())
             verbObjectList.objectList().`object`().forEach { objectContext ->
                 handleObject(objectContext).forEach { `object` ->
-                    model.addStatement(subject, predicate, `object`)
+                    model.add(Quad(subject, predicate, `object`))
                 }
             }
         }
@@ -263,16 +263,16 @@ private class TurtleDocVisitor: TurtleBaseVisitor<Collection<Quad>>() {
         val iterator = ctx.`object`().iterator()
         while(iterator.hasNext()) {
             if (lastNode != null) {
-                model.addStatement(lastNode, restIRI, currentNode)
+                model.add(Quad(lastNode, restIRI, currentNode))
             }
             val currentObject = handleObject(iterator.next())
-            model.addStatement(currentNode, firstIRI, currentObject.first())
+            model.add(Quad(currentNode, firstIRI, currentObject.first()))
             lastNode = currentNode
             if (iterator.hasNext()) {
                 currentNode = handleBlankNode("ANON${++anonymousCounter}")
             }
         }
-        model.addStatement(currentNode, restIRI, nilIRI)
+        model.add(Quad(currentNode, restIRI, nilIRI))
         return firstNode
     }
 }

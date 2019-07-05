@@ -96,7 +96,7 @@ class ParseTreeDebugView {
         val lexer = NTriplesLexer(stream)
         val tokenStream = CommonTokenStream(lexer)
         val parser = NTriplesParser(tokenStream)
-        val tree = parser.ntriplesDoc()
+        val tree = parser.nTriplesDoc()
         return TreeViewer(parser.ruleNames.toList(), tree)
     }
 }

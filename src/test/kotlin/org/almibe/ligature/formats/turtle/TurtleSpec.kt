@@ -6,10 +6,10 @@ package org.almibe.ligature.formats.turtle
 
 import io.kotlintest.specs.StringSpec
 import org.almibe.ligature.*
-import org.almibe.ligature.parsers.enemyOf
-import org.almibe.ligature.parsers.greenGoblin
-import org.almibe.ligature.parsers.readText
-import org.almibe.ligature.parsers.spiderMan
+import org.almibe.ligature.formats.enemyOf
+import org.almibe.ligature.formats.greenGoblin
+import org.almibe.ligature.formats.readText
+import org.almibe.ligature.formats.spiderMan
 
 class TurtleSpec : StringSpec() {
     override fun isInstancePerTest() = true
@@ -24,22 +24,8 @@ class TurtleSpec : StringSpec() {
         val rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
         val stringIRI = IRI("http://www.w3.org/2001/XMLSchema#string")
 
-        fun prettyPrint(graph : Graph) {
-            graph.getSubjects().forEach { subject ->
-                println("* $subject")
-                graph.statementsFor(subject).forEach { statement ->
-                    println("** $statement")
-                }
-            }
-        }
-
-        fun compareModels(results: InMemoryGraph, expectedResults: InMemoryGraph): Boolean {
-            assert(results.getSubjects() == expectedResults.getSubjects())
-            assert(results.getObjects() == expectedResults.getObjects())
-            assert(results.getPredicates() == expectedResults.getPredicates())
-            results.getSubjects().forEach { subject ->
-              assert(results.statementsFor(subject) == expectedResults.statementsFor(subject))
-            }
+        fun compareModels(results: Set<Quad>, expectedResults: Set<Quad>): Boolean {
+            assert(results == expectedResults)
             return true
         }
 

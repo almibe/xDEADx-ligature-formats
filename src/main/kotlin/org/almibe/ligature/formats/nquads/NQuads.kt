@@ -5,47 +5,40 @@
 package org.almibe.ligature.formats.nquads
 
 import org.almibe.ligature.*
-import org.almibe.ligature.parser.ntriples.NTriplesBaseListener
+import org.almibe.ligature.parser.nquads.NQuadsBaseListener
+import org.almibe.ligature.parser.nquads.NQuadsLexer
+import org.almibe.ligature.parser.nquads.NQuadsParser
 import org.almibe.ligature.parser.ntriples.NTriplesParser
-import org.almibe.ligature.store.InMemoryStore
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ErrorNode
+import org.antlr.v4.runtime.tree.ParseTreeWalker
 import java.io.Reader
-import java.io.Writer
 
-class NTriples: Parser {
-    override fun import(reader: Reader, store: Store, defaultGraph: IRI?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+class NQuads {
+    fun loadNQuads(reader: Reader): Set<Quad> {
+        val stream = CharStreams.fromReader(reader)
+        val lexer = NQuadsLexer(stream)
+        val tokens = CommonTokenStream(lexer)
+        val parser = NQuadsParser(tokens)
+        val walker = ParseTreeWalker()
+        val listener = NQuadsListener()
+        walker.walk(listener, parser.nQuadsDoc())
+        return listener.model
     }
-
-    override fun export(writer: Writer, graphs: Collection<Graph>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
 }
-//{
-//    fun loadNTriples(reader: Reader): Graph {
-//        val stream = CharStreams.fromReader(reader)
-//        val lexer = NTriplesLexer(stream)
-//        val tokens = CommonTokenStream(lexer)
-//        val parser = NTriplesParser(tokens)
-//        val walker = ParseTreeWalker()
-//        val listener = TriplesNTripleListener()
-//        walker.walk(listener, parser.ntriplesDoc())
-//        return listener.model
-//    }
-//}
 
-private class TriplesNTripleListener : NTriplesBaseListener() {
-    val model = InMemoryStore()
-    lateinit var currentTriple: TempTriple
+private class NQuadsListener : NQuadsBaseListener() {
+    val model = mutableSetOf<Quad>()
+    lateinit var currentQuad: TempQuad
     val blankNodes = HashMap<String, BlankNode>()
 
     override fun enterTriple(ctx: NTriplesParser.TripleContext) {
-        currentTriple = TempTriple()
+        currentQuad = TempQuad()
     }
 
     override fun exitSubject(ctx: NTriplesParser.SubjectContext) {
-        currentTriple.subject = when {
+        currentQuad.subject = when {
             ctx.IRIREF() != null -> handleIRI(ctx.IRIREF().text)
             ctx.BLANK_NODE_LABEL() != null -> handleBlankNode(ctx.BLANK_NODE_LABEL().text)
             else -> throw RuntimeException("Unexpected Subject Type")
@@ -53,7 +46,7 @@ private class TriplesNTripleListener : NTriplesBaseListener() {
     }
 
     override fun exitPredicate(ctx: NTriplesParser.PredicateContext) {
-        currentTriple.predicate = handleIRI(ctx.IRIREF().text)
+        currentQuad.predicate = handleIRI(ctx.IRIREF().text)
     }
 
     override fun exitObject(ctx: NTriplesParser.ObjectContext) {
@@ -88,7 +81,7 @@ private class TriplesNTripleListener : NTriplesBaseListener() {
             literal.IRIREF() != null -> TypedLiteral(value, handleIRI(literal.IRIREF().text))
             else -> TypedLiteral(value)
         }
-        model.addStatement(currentTriple.subject, currentTriple.predicate, result)
+        model.addStatement(currentQuad.subject, currentQuad.predicate, result)
     }
 
     fun handleBlankNode(blankNode: String): BlankNode {
@@ -107,11 +100,12 @@ private class TriplesNTripleListener : NTriplesBaseListener() {
     }
 
     fun handleObject(objectVertex: Object) {
-        model.addStatement(currentTriple.subject, currentTriple.predicate, objectVertex)
+        model.addStatement(currentQuad.subject, currentQuad.predicate, objectVertex)
     }
 
-    internal class TempTriple {
+    internal class TempQuad {
         lateinit var subject: Subject
         lateinit var predicate: Predicate
+        lateinit var `object`: Object
     }
 }

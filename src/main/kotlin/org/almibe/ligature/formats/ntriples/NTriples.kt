@@ -6,37 +6,29 @@ package org.almibe.ligature.formats.ntriples
 
 import org.almibe.ligature.*
 import org.almibe.ligature.parser.ntriples.NTriplesBaseListener
+import org.almibe.ligature.parser.ntriples.NTriplesLexer
 import org.almibe.ligature.parser.ntriples.NTriplesParser
-import org.almibe.ligature.store.InMemoryStore
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ErrorNode
+import org.antlr.v4.runtime.tree.ParseTreeWalker
 import java.io.Reader
-import java.io.Writer
 
-class NTriples: Parser {
-    override fun import(reader: Reader, store: Store, defaultGraph: IRI?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+class NTriples {
+    fun loadNTriples(reader: Reader): Set<Quad> {
+        val stream = CharStreams.fromReader(reader)
+        val lexer = NTriplesLexer(stream)
+        val tokens = CommonTokenStream(lexer)
+        val parser = NTriplesParser(tokens)
+        val walker = ParseTreeWalker()
+        val listener = TriplesNTripleListener()
+        walker.walk(listener, parser.nTriplesDoc())
+        return listener.model
     }
-
-    override fun export(writer: Writer, graphs: Collection<Graph>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
 }
-//{
-//    fun loadNTriples(reader: Reader): Graph {
-//        val stream = CharStreams.fromReader(reader)
-//        val lexer = NTriplesLexer(stream)
-//        val tokens = CommonTokenStream(lexer)
-//        val parser = NTriplesParser(tokens)
-//        val walker = ParseTreeWalker()
-//        val listener = TriplesNTripleListener()
-//        walker.walk(listener, parser.ntriplesDoc())
-//        return listener.model
-//    }
-//}
 
 private class TriplesNTripleListener : NTriplesBaseListener() {
-    val model = InMemoryStore()
+    val model = mutableSetOf<Quad>()
     lateinit var currentTriple: TempTriple
     val blankNodes = HashMap<String, BlankNode>()
 
@@ -88,7 +80,7 @@ private class TriplesNTripleListener : NTriplesBaseListener() {
             literal.IRIREF() != null -> TypedLiteral(value, handleIRI(literal.IRIREF().text))
             else -> TypedLiteral(value)
         }
-        model.addStatement(currentTriple.subject, currentTriple.predicate, result)
+        model.add(Quad(currentTriple.subject, currentTriple.predicate, result))
     }
 
     fun handleBlankNode(blankNode: String): BlankNode {
@@ -107,7 +99,7 @@ private class TriplesNTripleListener : NTriplesBaseListener() {
     }
 
     fun handleObject(objectVertex: Object) {
-        model.addStatement(currentTriple.subject, currentTriple.predicate, objectVertex)
+        model.add(Quad(currentTriple.subject, currentTriple.predicate, objectVertex))
     }
 
     internal class TempTriple {
