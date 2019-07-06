@@ -104,14 +104,10 @@ class TurtleSpec : StringSpec() {
             val model = turtle.loadTurtle(readText("/turtle/08-literalWithLanguage.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(IRI("http://example.org/#spiderman"),
+                            IRI("http://xmlns.com/foaf/0.1/name"), LangLiteral("Человек-паук", "ru"))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(IRI("http://example.org/#spiderman"),
-                    IRI("http://xmlns.com/foaf/0.1/name"), LangLiteral("Человек-паук", "ru"))
-
-            compareModels(model, expectedModel)
+            model.size shouldBe 1
         }
 
         "support quoted literals" {
@@ -129,20 +125,16 @@ class TurtleSpec : StringSpec() {
             val model = turtle.loadTurtle(readText("/turtle/09-quotedLiterals.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(show, label, TypedLiteral("That Seventies Show", stringIRI)),
+                    Quad(show, IRI("${base}pred"), TypedLiteral("That Seventies Show", IRI("${base}string"))),
+                    Quad(show, localName, LangLiteral("That Seventies Show", "en")),
+                    Quad(show, localName, LangLiteral("Cette Série des Années Soixante-dix", "fr")),
+                    Quad(show, localName, LangLiteral("Cette Série des Années Septante", "fr-be")),
+                    Quad(show, blurb, TypedLiteral(multilineText, stringIRI)),
+                    Quad(show219, blurb, TypedLiteral(multilineText2, IRI("${base}long-string"))),
+                    Quad(show219, blurb, TypedLiteral("", stringIRI))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(show, label, TypedLiteral("That Seventies Show", org.almibe.ligature.parsers.stringIRI))
-            expectedModel.addStatement(show, IRI("${base}pred"), TypedLiteral("That Seventies Show", IRI("${base}string")))
-            expectedModel.addStatement(show, localName, LangLiteral("That Seventies Show", "en"))
-            expectedModel.addStatement(show, localName, LangLiteral("Cette Série des Années Soixante-dix", "fr"))
-            expectedModel.addStatement(show, localName, LangLiteral("Cette Série des Années Septante", "fr-be"))
-            expectedModel.addStatement(show, blurb, TypedLiteral(multilineText, org.almibe.ligature.parsers.stringIRI))
-            expectedModel.addStatement(show219, blurb, TypedLiteral(multilineText2, IRI("${base}long-string")))
-            expectedModel.addStatement(show219, blurb, TypedLiteral("", org.almibe.ligature.parsers.stringIRI))
-
-            compareModels(model, expectedModel)
+            model.size shouldBe 8
         }
 
         "support number types" {
@@ -151,113 +143,84 @@ class TurtleSpec : StringSpec() {
             val model = turtle.loadTurtle(readText("/turtle/10-numbers.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(IRI(helium), IRI("${prefix}atomicNumber"), TypedLiteral("2", IRI("${xsd}integer"))),
+                    Quad(IRI(helium), IRI("${prefix}atomicMass"), TypedLiteral("4.002602", IRI("${xsd}float"))),
+                    Quad(IRI(helium), IRI("${prefix}specificGravity"), TypedLiteral("1.663E-4", IRI("${xsd}double")))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(IRI(helium), IRI("${prefix}atomicNumber"), TypedLiteral("2", IRI("${xsd}integer")))
-            expectedModel.addStatement(IRI(helium), IRI("${prefix}atomicMass"), TypedLiteral("4.002602", IRI("${xsd}float")))
-            expectedModel.addStatement(IRI(helium), IRI("${prefix}specificGravity"), TypedLiteral("1.663E-4", IRI("${xsd}double")))
-
-            compareModels(model, expectedModel)
+            model.size shouldBe 3
         }
 
         "support booleans" {
             val model = turtle.loadTurtle(readText("/turtle/11-booleans.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(IRI("http://somecountry.example/census2007"), IRI("http://example.org/stats/isLandlocked"),
+                            TypedLiteral("false", IRI("${xsd}boolean")))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(IRI("http://somecountry.example/census2007"), IRI("http://example.org/stats/isLandlocked"),
-                    TypedLiteral("false", IRI("${xsd}boolean")))
-
-            compareModels(model, expectedModel)
+            model.size shouldBe 1
         }
 
         "support blank nodes" {
-            val model = turtle.loadTurtle(readText("/turtle/12-blankNodes.ttl")) as InMemoryGraph
+            val model = turtle.loadTurtle(readText("/turtle/12-blankNodes.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(BlankNode("alice"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("bob")),
+                    Quad(BlankNode("bob"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("alice"))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(BlankNode("alice"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("bob"))
-            expectedModel.addStatement(BlankNode("bob"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("alice"))
-
-            compareModels(result, expectedModel)
+            model.size shouldBe 2
         }
 
         "unlabeled blank nodes" {
-            val model = turtle.loadTurtle(readText("/turtle/13-unlabeledBlankNodes.ttl")) as InMemoryGraph
+            val model = turtle.loadTurtle(readText("/turtle/13-unlabeledBlankNodes.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(IRI("http://example.com/person/bob"), foafKnows, IRI("http://example.com/person/george")),
+                    Quad(BlankNode("ANON1"), foafKnows, IRI("http://example.com/person/george")),
+                    Quad(IRI("http://example.com/person/bob"), foafKnows, BlankNode("ANON2")),
+                    Quad(BlankNode("ANON3"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON4"))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(IRI("http://example.com/person/bob"), foafKnows, IRI("http://example.com/person/george"))
-            expectedModel.addStatement(BlankNode("ANON1"), foafKnows, IRI("http://example.com/person/george"))
-            expectedModel.addStatement(IRI("http://example.com/person/bob"), foafKnows, BlankNode("ANON2"))
-            expectedModel.addStatement(BlankNode("ANON3"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON4"))
-
-            compareModels(result, expectedModel)
+            model.size shouldBe 4
         }
 
         "nested unlabeled blank nodes" {
-            val model = turtle.loadTurtle(readText("/turtle/14-nestedUnlabeledBlankNodes.ttl")) as InMemoryGraph
+            val model = turtle.loadTurtle(readText("/turtle/14-nestedUnlabeledBlankNodes.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Bob", stringIRI)),
+                    Quad(BlankNode("ANON1"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON2"))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Bob", org.almibe.ligature.parsers.stringIRI))
-            expectedModel.addStatement(BlankNode("ANON1"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON2"))
-
-            compareModels(result, expectedModel)
+            model.size shouldBe 2
         }
 
         "complex unlabeled blank nodes" {
-            val model = turtle.loadTurtle(readText("/turtle/15-complexUnlabeledBlankNodes.ttl")) as InMemoryGraph
+            val model = turtle.loadTurtle(readText("/turtle/15-complexUnlabeledBlankNodes.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(BlankNode("ANON1"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Alice", stringIRI)),
+                    Quad(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Bob", stringIRI)),
+                    Quad(BlankNode("ANON1"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON2")),
+                    Quad(BlankNode("ANON3"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Eve", stringIRI)),
+                    Quad(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON3")),
+                    Quad(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/mbox"), IRI("http://bob@example.com"))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(BlankNode("ANON1"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Alice", org.almibe.ligature.parsers.stringIRI))
-            expectedModel.addStatement(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Bob", org.almibe.ligature.parsers.stringIRI))
-            expectedModel.addStatement(BlankNode("ANON1"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON2"))
-            expectedModel.addStatement(BlankNode("ANON3"), IRI("http://xmlns.com/foaf/0.1/name"), TypedLiteral("Eve", org.almibe.ligature.parsers.stringIRI))
-            expectedModel.addStatement(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/knows"), BlankNode("ANON3"))
-            expectedModel.addStatement(BlankNode("ANON2"), IRI("http://xmlns.com/foaf/0.1/mbox"), IRI("http://bob@example.com"))
-
-            compareModels(result, expectedModel)
+            model.size shouldBe 6
         }
 
         "support collections" {
-            val model = turtle.loadTurtle(readText("/turtle/16-collections.ttl")) as InMemoryGraph
+            val model = turtle.loadTurtle(readText("/turtle/16-collections.ttl"))
 
             model.containsAll(setOf(
-
+                    Quad(IRI("http://example.org/foo/subject"), IRI("http://example.org/foo/predicate"), BlankNode("ANON1")),
+                    Quad(BlankNode("ANON1"), IRI("${rdf}first"), IRI("http://example.org/foo/a")),
+                    Quad(BlankNode("ANON1"), IRI("${rdf}rest"), BlankNode("ANON2")),
+                    Quad(BlankNode("ANON2"), IRI("${rdf}first"), IRI("http://example.org/foo/b")),
+                    Quad(BlankNode("ANON2"), IRI("${rdf}rest"), BlankNode("ANON3")),
+                    Quad(BlankNode("ANON3"), IRI("${rdf}first"), IRI("http://example.org/foo/c")),
+                    Quad(BlankNode("ANON3"), IRI("${rdf}rest"), IRI("${rdf}nil")),
+                    Quad(IRI("http://example.org/foo/subject"), IRI("http://example.org/foo/predicate2"), IRI("${rdf}nil"))
             )) shouldBe true
-            model.size shouldBe
-
-            expectedModel.addStatement(IRI("http://example.org/foo/subject"), IRI("http://example.org/foo/predicate"), BlankNode("ANON1"))
-            expectedModel.addStatement(BlankNode("ANON1"), IRI("${rdf}first"), IRI("http://example.org/foo/a"))
-            expectedModel.addStatement(BlankNode("ANON1"), IRI("${rdf}rest"), BlankNode("ANON2"))
-            expectedModel.addStatement(BlankNode("ANON2"), IRI("${rdf}first"), IRI("http://example.org/foo/b"))
-            expectedModel.addStatement(BlankNode("ANON2"), IRI("${rdf}rest"), BlankNode("ANON3"))
-            expectedModel.addStatement(BlankNode("ANON3"), IRI("${rdf}first"), IRI("http://example.org/foo/c"))
-            expectedModel.addStatement(BlankNode("ANON3"), IRI("${rdf}rest"), IRI("${rdf}nil"))
-            expectedModel.addStatement(IRI("http://example.org/foo/subject"), IRI("http://example.org/foo/predicate2"), IRI("${rdf}nil"))
-
-            compareModels(result, expectedModel)
+            model.size shouldBe 8
         }
-
     }
 
 ////////
