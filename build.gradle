@@ -11,6 +11,10 @@ repositories {
     jcenter()
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     compile 'org.almibe:ligature:0.1.0-SNAPSHOT'
     compile 'org.antlr:antlr4-runtime:4.7.2'
@@ -19,5 +23,5 @@ dependencies {
     compile 'com.google.code.gson:gson:2.8.5'
     compile 'com.fasterxml.woodstox:woodstox-core:5.2.1'
     testCompile 'org.antlr:antlr4:4.7.2'
-    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.3.3'
+    testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.3.2'
 }
