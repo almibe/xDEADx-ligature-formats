@@ -2,23 +2,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.almibe.ligature.formats
+package dev.ligature.formats
 
-import org.almibe.ligature.IRI
-import org.almibe.ligature.formats.ntriples.NTriplesSpec
-import java.io.InputStreamReader
+import dev.ligature.NamedNode
 import java.io.Reader
+import scala.io.Source
 
-val stringIRI = IRI("http://www.w3.org/2001/XMLSchema#string")
-val spiderMan = IRI ("http://example.org/#spiderman")
-val greenGoblin = IRI ("http://example.org/#green-goblin")
-val blackCat = IRI("http://example.org/#black-cat")
-val enemyOf = IRI ("http://www.perceive.net/schemas/relationship/enemyOf")
-val thatSeventiesShow = IRI ("http://example.org/show/218")
-val helium = IRI ("http://en.wikipedia.org/wiki/Helium")
-val label = IRI ("http://www.w3.org/2000/01/rdf-schema#label")
-val localName = IRI ("http://example.org/show/localName")
+object Common {
+  val stringNamedNode: NamedNode = NamedNode("http://www.w3.org/2001/XMLSchema#string")
+  val spiderMan: NamedNode = NamedNode ("http://example.org/#spiderman")
+  val greenGoblin: NamedNode = NamedNode ("http://example.org/#green-goblin")
+  val blackCat: NamedNode = NamedNode("http://example.org/#black-cat")
+  val enemyOf: NamedNode = NamedNode ("http://www.perceive.net/schemas/relationship/enemyOf")
+  val thatSeventiesShow: NamedNode = NamedNode ("http://example.org/show/218")
+  val helium: NamedNode = NamedNode ("http://en.wikipedia.org/wiki/Helium")
+  val label: NamedNode = NamedNode ("http://www.w3.org/2000/01/rdf-schema#label")
+  val localName: NamedNode = NamedNode ("http://example.org/show/localName")
 
-fun readText(resourcePath: String): Reader {
-    return InputStreamReader(NTriplesSpec::class.java.getResourceAsStream(resourcePath))
+  def readText(resourcePath: String): Reader = {
+      Source.fromResource(resourcePath).reader()
+  }
 }
