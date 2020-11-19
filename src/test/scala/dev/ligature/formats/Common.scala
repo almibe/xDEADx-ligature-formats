@@ -4,8 +4,10 @@
 
 package dev.ligature.formats
 
+import cats.effect.IO
 import dev.ligature.NamedNode
-import java.io.Reader
+import fs2.Stream
+
 import scala.io.Source
 
 object Common {
@@ -19,7 +21,7 @@ object Common {
   val label: NamedNode = NamedNode ("http://www.w3.org/2000/01/rdf-schema#label")
   val localName: NamedNode = NamedNode ("http://example.org/show/localName")
 
-  def readText(resourcePath: String): Reader = {
-      Source.fromResource(resourcePath).reader()
+  def readText(resourcePath: String): Stream[IO, String] = {
+      Stream.fromIterator(Source.fromResource(resourcePath).getLines())
   }
 }

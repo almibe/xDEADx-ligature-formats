@@ -19,7 +19,7 @@ import fs2.Stream
 //import java.io.Reader
 
 object NTriples {
-  def parseNTriples(in: String): Stream[IO, Statement] = {
+  def parseNTriples(in: Stream[IO, String]): Stream[IO, Statement] = {
     ???
   }
 }
