@@ -10,20 +10,20 @@ import munit.FunSuite
 
 class NTriplesSpec extends FunSuite {
   test("support basic IRI triple") {
-    val result = NTriples.parseNTriples(readText("/ntriples/01-basicTriple.nt")).compile.toList.unsafeRunSync()
+    val result = NTriples.parseNTriples(readText("ntriples/01-basicTriple.nt")).compile.toList.unsafeRunSync()
     assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
     assertEquals(result.size, 1)
   }
 
   test("support multiple IRI triples") {
-    val result = NTriples.parseNTriples(readText("/ntriples/02-multipleIRITriples.nt")).compile.toList.unsafeRunSync()
+    val result = NTriples.parseNTriples(readText("ntriples/02-multipleIRITriples.nt")).compile.toList.unsafeRunSync()
     assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
     assert(result.contains(Statement(spiderMan, enemyOf, blackCat)))
     assertEquals(result.size, 2)
   }
 
   test("support beginning of line and end of line comments") {
-    val result = NTriples.parseNTriples(readText("/ntriples/03-comments.nt")).compile.toList.unsafeRunSync()
+    val result = NTriples.parseNTriples(readText("ntriples/03-comments.nt")).compile.toList.unsafeRunSync()
     assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
     assertEquals(result.size, 1)
   }

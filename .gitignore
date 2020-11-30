@@ -1,3 +1,8 @@
 target/
 .idea
 _site
+.bloop/
+.metals/
+.vscode/
+project/project/
+project/metals.sbt

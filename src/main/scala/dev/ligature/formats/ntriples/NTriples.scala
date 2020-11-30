@@ -5,115 +5,26 @@
 package dev.ligature.formats.ntriples
 
 import cats.effect.IO
-import dev.ligature.Statement
+import cats.parse.{Parser1, Parser => P}
+import dev.ligature.{NamedNode, Statement}
 import fs2.Stream
 
-//import org.almibe.ligature.*
-//import org.almibe.ligature.parser.ntriples.NTriplesBaseListener
-//import org.almibe.ligature.parser.ntriples.NTriplesLexer
-//import org.almibe.ligature.parser.ntriples.NTriplesParser
-//import org.antlr.v4.runtime.CharStreams
-//import org.antlr.v4.runtime.CommonTokenStream
-//import org.antlr.v4.runtime.tree.ErrorNode
-//import org.antlr.v4.runtime.tree.ParseTreeWalker
-//import java.io.Reader
-
 object NTriples {
+//  private[this] val whitespace: Parser1[Unit] = P.charIn(" \t\r\n").void
+//  private[this] val whitespaces0: P[Unit] = whitespace.rep.void
+
+  private val iriStart = P.char('<').void
+  private val iriEnd = P.char('>').void
+  private val iriContent = P.charsWhile(c => dev.ligature.Ligature.v).map(NamedNode)
+  private val iri = (iriStart ~ iriContent ~ iriEnd).map(_._1._2)
+  private val statement = (iri ~ iri ~ iri).map(s => Statement(s._1._1, s._1._2, s._2))
+
   def parseNTriples(in: Stream[IO, String]): Stream[IO, Statement] = {
-    ???
+    in.map { line =>
+      statement.parse(line) match {
+        case Left(value) => throw new RuntimeException(s"Error parsing $line\n$value")
+        case Right(value) => value._2
+      }
+    }
   }
 }
-
-//class NTriples {
-//    fun loadNTriples(reader: Reader): Set<Quad> {
-//        val stream = CharStreams.fromReader(reader)
-//        val lexer = NTriplesLexer(stream)
-//        val tokens = CommonTokenStream(lexer)
-//        val parser = NTriplesParser(tokens)
-//        val walker = ParseTreeWalker()
-//        val listener = TriplesNTripleListener()
-//        walker.walk(listener, parser.nTriplesDoc())
-//        return listener.model
-//    }
-//}
-//
-//private class TriplesNTripleListener : NTriplesBaseListener() {
-//    val model = mutableSetOf<Quad>()
-//    lateinit var currentTriple: TempTriple
-//    val blankNodes = HashMap<String, BlankNode>()
-//
-//    override fun enterTriple(ctx: NTriplesParser.TripleContext) {
-//        currentTriple = TempTriple()
-//    }
-//
-//    override fun exitSubject(ctx: NTriplesParser.SubjectContext) {
-//        currentTriple.subject = when {
-//            ctx.IRIREF() != null -> handleIRI(ctx.IRIREF().text)
-//            ctx.BLANK_NODE_LABEL() != null -> handleBlankNode(ctx.BLANK_NODE_LABEL().text)
-//            else -> throw RuntimeException("Unexpected Subject Type")
-//        }
-//    }
-//
-//    override fun exitPredicate(ctx: NTriplesParser.PredicateContext) {
-//        currentTriple.predicate = handleIRI(ctx.IRIREF().text)
-//    }
-//
-//    override fun exitObject(ctx: NTriplesParser.ObjectContext) {
-//        when {
-//            ctx.IRIREF() != null -> handleObject(handleIRI(ctx.IRIREF().text))
-//            ctx.BLANK_NODE_LABEL() != null -> handleObject(handleBlankNode(ctx.BLANK_NODE_LABEL().text))
-//            ctx.literal() != null -> handleLiteral(ctx.literal())
-//            else -> throw RuntimeException("Unexpected Object Type")
-//        }
-//    }
-//
-//    override fun visitErrorNode(node: ErrorNode) {
-//        throw RuntimeException(node.toString()) //TODO do I need this or will ANTLR throw its own RTE?
-//    }
-//
-//    internal fun handleIRI(iriRef: String): IRI {
-//        if (iriRef.length > 2) {
-//            return IRI(iriRef.substring(1, (iriRef.length-1)))
-//        } else {
-//            throw RuntimeException("Invalid iriRef - $iriRef")
-//        }
-//    }
-//
-//    internal fun handleLiteral(literal: NTriplesParser.LiteralContext) {
-//        val value = if (literal.STRING_LITERAL_QUOTE().text.length >= 2) {
-//            literal.STRING_LITERAL_QUOTE().text.substring(1, literal.STRING_LITERAL_QUOTE().text.length-1)
-//        } else {
-//            throw RuntimeException("Invalid literal.")
-//        }
-//        val result = when {
-//            literal.LANGTAG() != null -> LangLiteral(value, literal.LANGTAG().text.substring(1))
-//            literal.IRIREF() != null -> TypedLiteral(value, handleIRI(literal.IRIREF().text))
-//            else -> TypedLiteral(value)
-//        }
-//        model.add(Quad(currentTriple.subject, currentTriple.predicate, result))
-//    }
-//
-//    fun handleBlankNode(blankNode: String): BlankNode {
-//        return if (blankNode.length > 2) {
-//            val blankNodeLabel = blankNode.substring(2)
-//            if (blankNodes.containsKey(blankNodeLabel)) {
-//                blankNodes[blankNodeLabel]!!
-//            } else {
-//                val newBlankNode = BlankNode(blankNodeLabel)
-//                blankNodes[blankNodeLabel] = newBlankNode
-//                newBlankNode
-//            }
-//        } else {
-//            throw RuntimeException("Invalid blank node label - $blankNode")
-//        }
-//    }
-//
-//    fun handleObject(objectVertex: Object) {
-//        model.add(Quad(currentTriple.subject, currentTriple.predicate, objectVertex))
-//    }
-//
-//    internal class TempTriple {
-//        lateinit var subject: Subject
-//        lateinit var predicate: Predicate
-//    }
-//}
