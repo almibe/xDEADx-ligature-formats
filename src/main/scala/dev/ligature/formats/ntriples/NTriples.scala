@@ -6,8 +6,9 @@ package dev.ligature.formats.ntriples
 
 import cats.effect.IO
 import cats.parse.{Parser1, Parser => P}
-import dev.ligature.{NamedNode, Statement}
-import fs2.Stream
+import dev.ligature.Statement
+import dev.ligature.iris.IRI
+import monix.reactive.Observable
 
 object NTriples {
 //  private[this] val whitespace: Parser1[Unit] = P.charIn(" \t\r\n").void
@@ -15,11 +16,11 @@ object NTriples {
 
   private val iriStart = P.char('<').void
   private val iriEnd = P.char('>').void
-  private val iriContent = P.charsWhile(c => dev.ligature.Ligature.v).map(NamedNode)
+  private val iriContent = P.charsWhile(c => c != '>').map(str => IRI(str).getOrElse(???))
   private val iri = (iriStart ~ iriContent ~ iriEnd).map(_._1._2)
   private val statement = (iri ~ iri ~ iri).map(s => Statement(s._1._1, s._1._2, s._2))
 
-  def parseNTriples(in: Stream[IO, String]): Stream[IO, Statement] = {
+  def parseNTriples(in: Observable[String]): Observable[Statement] = {
     in.map { line =>
       statement.parse(line) match {
         case Left(value) => throw new RuntimeException(s"Error parsing $line\n$value")
