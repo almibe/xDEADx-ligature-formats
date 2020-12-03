@@ -10,7 +10,6 @@ lazy val root = project
   .settings(
     name := "ligature-formats",
     libraryDependencies += "dev.ligature" %% "ligature" % "0.1.0-SNAPSHOT",
-    libraryDependencies += ("org.typelevel" %% "cats-parse" % "0.1-31-923a513").withDottyCompat(scalaVersion.value),
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.19" % Test,
     testFrameworks += new TestFramework("munit.Framework")
   )

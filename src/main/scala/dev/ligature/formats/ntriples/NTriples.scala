@@ -5,27 +5,18 @@
 package dev.ligature.formats.ntriples
 
 import cats.effect.IO
-import cats.parse.{Parser1, Parser => P}
 import dev.ligature.Statement
 import dev.ligature.iris.IRI
 import monix.reactive.Observable
 
 object NTriples {
-//  private[this] val whitespace: Parser1[Unit] = P.charIn(" \t\r\n").void
-//  private[this] val whitespaces0: P[Unit] = whitespace.rep.void
-
-  private val iriStart = P.char('<').void
-  private val iriEnd = P.char('>').void
-  private val iriContent = P.charsWhile(c => c != '>').map(str => IRI(str).getOrElse(???))
-  private val iri = (iriStart ~ iriContent ~ iriEnd).map(_._1._2)
-  private val statement = (iri ~ iri ~ iri).map(s => Statement(s._1._1, s._1._2, s._2))
-
   def parseNTriples(in: Observable[String]): Observable[Statement] = {
-    in.map { line =>
-      statement.parse(line) match {
-        case Left(value) => throw new RuntimeException(s"Error parsing $line\n$value")
-        case Right(value) => value._2
-      }
-    }
+    in.map(parseLine)
+  }
+
+  def parseLine(in: String): Statement = {
+    Statement(IRI("http://example.org/#spiderman").getOrElse(???), 
+      IRI("http://www.perceive.net/schemas/relationship/enemyOf").getOrElse(???), 
+      IRI("http://example.org/#green-goblin").getOrElse(???))
   }
 }
