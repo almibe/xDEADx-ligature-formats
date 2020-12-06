@@ -21,7 +21,7 @@ object Common {
   val label: IRI = IRI("http://www.w3.org/2000/01/rdf-schema#label").getOrElse(???)
   val localName: IRI = IRI("http://example.org/show/localName").getOrElse(???)
 
-  def readText(resourcePath: String): Observable[String] = {
-      Observable.fromIteratorUnsafe(Source.fromResource(resourcePath).getLines)
+  def readText(resourcePath: String): Iterator[Char] = {
+      Source.fromResource(resourcePath).iterator
   }
 }
