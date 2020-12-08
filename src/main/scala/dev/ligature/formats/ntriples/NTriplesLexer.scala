@@ -43,20 +43,80 @@ object NTriplesLexer {
 
   private def iri(walker: Walker): NTriplesToken.IRI = {
     val sb = StringBuilder()
-    while (walker.hasNext) {
-      val next = walker.next
-      next match {
-        case '>' => return NTriplesToken.IRI(sb.toString)
-        case _   => sb.append(next)
-      }
+    if (!walker.hasNext) {
+      throw RuntimeException("Invalid IRI.")
     }
-    ??? //TODO: probably throw parser exception
+    while (walker.hasNext && walker.next != '>') {
+      sb.append(walker.current.get)
+    }
+    if (walker.current.isDefined && walker.current.get == '>') {
+      NTriplesToken.IRI(sb.toString)
+    } else {
+      throw RuntimeException("Invalid IRI.")
+    }
   }
 
-  private def typeSymbol(walker: Walker): NTriplesToken.TypeSymbol = ???
-  private def langTag(walker: Walker): NTriplesToken.LangTag = ???
-  private def literal(walker: Walker): NTriplesToken.Literal = ???
-  private def blankNodeLabel(walker: Walker): NTriplesToken.BlankNodeLabel = ???
-  private def endOfStatement(walker: Walker): NTriplesToken.EndOfStatement = ???
-  private def endOfLine(walker: Walker): NTriplesToken.EndOfLine = ???
+  private def typeSymbol(walker: Walker): NTriplesToken.TypeSymbol = {
+    if (walker.hasNext && walker.next == '^') {
+      return NTriplesToken.TypeSymbol()
+    }
+    else {
+      throw RuntimeException("Invalid type symbol.")
+    }
+  }
+
+  private def langTag(walker: Walker): NTriplesToken.LangTag = {
+    val sb = StringBuilder()
+    if (!walker.hasNext) {
+      throw RuntimeException("Invalid lang tag.")
+    }
+    while (walker.hasNext && (walker.next.isLetter || walker.current.get == '-')) {
+      sb.append(walker.current.get)
+    }
+    if (!sb.isEmpty) {
+      NTriplesToken.LangTag(sb.toString)
+    } else {
+      throw RuntimeException("Invalid lang tag.")
+    }
+  }
+  
+  private def literal(walker: Walker): NTriplesToken.Literal = {
+    val sb = StringBuilder()
+    if (!walker.hasNext) {
+      throw RuntimeException("Invalid literal.")
+    }
+    while (walker.hasNext && walker.next != '"') {
+      sb.append(walker.current.get)
+    }
+    if (walker.current.isDefined && walker.current.get == '"') {
+      NTriplesToken.Literal(sb.toString)
+    } else {
+      throw RuntimeException("Invalid literal.")
+    }
+  }
+  
+  private def blankNodeLabel(walker: Walker): NTriplesToken.BlankNodeLabel = {
+    val sb = StringBuilder()
+    if (!walker.hasNext) {
+      throw RuntimeException("Invalid blank node label.")
+    }
+    if (walker.next != ':') {
+      throw RuntimeException("Invalid blank node label.")
+    }
+    if (!walker.hasNext) {
+      throw RuntimeException("Invalid blank node label.")
+    }
+    while (walker.hasNext && (walker.next.isLetter)) {
+      sb.append(walker.current.get)
+    }
+    if (!sb.isEmpty) {
+      NTriplesToken.BlankNodeLabel(sb.toString)
+    } else {
+      throw RuntimeException("Invalid blank node label.")
+    }
+  }
+
+  private def endOfStatement(walker: Walker): NTriplesToken.EndOfStatement = NTriplesToken.EndOfStatement()
+  
+  private def endOfLine(walker: Walker): NTriplesToken.EndOfLine = NTriplesToken.EndOfLine()
 }

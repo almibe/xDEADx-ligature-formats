@@ -11,7 +11,7 @@ import munit.FunSuite
 
 class NTriplesLexerSuite extends FunSuite {
   private def readSingleToken(in: String): NTriplesToken = {
-    val res = NTriplesLexer.read("\"Hello, World\"").toList
+    val res = NTriplesLexer.read(in).toList
     assertEquals(res.size, 1)
     res.head
   }
