@@ -14,6 +14,7 @@ enum NTriplesToken { //TODO probably add parameters to this type to track line a
   case LangTag(value: String)
   case EndOfStatement()
   case EndOfLine()
+  case WhiteSpace()
 }
 
 object NTriplesLexer {
@@ -23,19 +24,28 @@ object NTriplesLexer {
     val walker = Walker(in)
     val res = scala.collection.mutable.ListBuffer[NTriplesToken]()
 
-    while (walker.hasNext) {
-      val char = walker.next
+    if (walker.hasNext) {
+      walker.next
+    } else {
+      return Iterator.empty
+    }
+
+    while (walker.current.isDefined) {
+      val char = walker.current.get
       val token = char match {
-        case '<'  => iri(walker)
-        case '^'  => typeSymbol(walker)
-        case '@'  => langTag(walker)
-        case '"'  => literal(walker)
-        case '_'  => blankNodeLabel(walker)
-        case '.'  => endOfStatement(walker)
-        case '\n' => endOfLine(walker)
-        case _    => throw RuntimeException(s"Error") //TODO include line + space info
+        case '<'        => iri(walker)
+        case '^'        => typeSymbol(walker)
+        case '@'        => langTag(walker)
+        case '"'        => literal(walker)
+        case '_'        => blankNodeLabel(walker)
+        case '.'        => endOfStatement(walker)
+        case '\n'       => endOfLine(walker)
+        case '\t' | ' ' => whiteSpace(walker)
+        case _          => throw RuntimeException(s"Error: $char") //TODO include line + space info
       }
-      res += token
+      if (!token.isInstanceOf[NTriplesToken.WhiteSpace]) {
+        res += token
+      }
     }
 
     res.iterator
@@ -89,9 +99,10 @@ object NTriplesLexer {
       sb.append(walker.current.get)
     }
     if (walker.current.isDefined && walker.current.get == '"') {
+      walker.consume
       NTriplesToken.Literal(sb.toString)
     } else {
-      throw RuntimeException("Invalid literal.")
+      throw RuntimeException("Invalid literal.??")
     }
   }
   
@@ -119,4 +130,14 @@ object NTriplesLexer {
   private def endOfStatement(walker: Walker): NTriplesToken.EndOfStatement = NTriplesToken.EndOfStatement()
   
   private def endOfLine(walker: Walker): NTriplesToken.EndOfLine = NTriplesToken.EndOfLine()
+
+  private def whiteSpace(walker: Walker): NTriplesToken.WhiteSpace = {
+    while (walker.hasNext) {
+      val next = walker.next
+      if (next != ' ' || next != '\t') {
+        return NTriplesToken.WhiteSpace()
+      }
+    }
+    return NTriplesToken.WhiteSpace()
+  }
 }

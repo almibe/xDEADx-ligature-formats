@@ -26,6 +26,14 @@ final class Walker(private val itr: Iterator[Char]) { //TODO not sure if this sh
   def hasNext: Boolean = itr.hasNext
 
   def next: Char = {
+    consume
+    current match {
+      case Some(char) => char
+      case None       => throw RuntimeException("Illegal call to next.")
+    }
+  }
+
+  def consume: Unit = {
     if (itr.hasNext) {
       if (line == 0) {
         line = line + 1
@@ -38,10 +46,8 @@ final class Walker(private val itr: Iterator[Char]) { //TODO not sure if this sh
       }
       val next = itr.next
       current = Some(next)
-      next
     } else {
       current = None
-      itr.next
-    }
+    }    
   }
 }
