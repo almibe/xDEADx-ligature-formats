@@ -9,24 +9,24 @@ import dev.ligature.formats.Common._
 import munit.FunSuite
 
 class NTriplesParserSuite extends FunSuite {
-  test("support basic IRI triple") {
-    val result = NTriples.parseNTriples(readText("ntriples/01-basicTriple.nt")).toSet
-    assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
-    assertEquals(result.size, 1)
-  }
+  // test("support basic IRI triple") {
+  //   val result = NTriples.parseNTriples(readText("ntriples/01-basicTriple.nt")).toSet
+  //   assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
+  //   assertEquals(result.size, 1)
+  // }
 
-  test("support multiple IRI triples") {
-    val result = NTriples.parseNTriples(readText("ntriples/02-multipleIRITriples.nt")).toSet
-    assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
-    assert(result.contains(Statement(spiderMan, enemyOf, blackCat)))
-    assertEquals(result.size, 2)
-  }
+  // test("support multiple IRI triples") {
+  //   val result = NTriples.parseNTriples(readText("ntriples/02-multipleIRITriples.nt")).toSet
+  //   assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
+  //   assert(result.contains(Statement(spiderMan, enemyOf, blackCat)))
+  //   assertEquals(result.size, 2)
+  // }
 
-  test("support beginning of line and end of line comments") {
-    val result = NTriples.parseNTriples(readText("ntriples/03-comments.nt")).toSet
-    assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
-    assertEquals(result.size, 1)
-  }
+  // test("support beginning of line and end of line comments") {
+  //   val result = NTriples.parseNTriples(readText("ntriples/03-comments.nt")).toSet
+  //   assert(result.contains(Statement(spiderMan, enemyOf, greenGoblin)))
+  //   assertEquals(result.size, 1)
+  // }
 
 //  test("support literals with languages and types") {
 //    val result = NTriples.parseNTriples(readText("/ntriples/04-literals.nt")).compile.toList.unsafeRunSync()

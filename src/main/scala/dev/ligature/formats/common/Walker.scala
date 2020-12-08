@@ -27,7 +27,10 @@ final class Walker(private val itr: Iterator[Char]) { //TODO not sure if this sh
 
   def next: Char = {
     if (itr.hasNext) {
-      if (current.get == '\n') {
+      if (line == 0) {
+        line = line + 1
+      }
+      if (current.isDefined && current.get == '\n') {
         line = line + 1
         space = 1
       } else {
