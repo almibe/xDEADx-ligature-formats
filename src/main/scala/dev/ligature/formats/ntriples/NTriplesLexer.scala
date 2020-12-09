@@ -15,6 +15,7 @@ enum NTriplesToken { //TODO probably add parameters to this type to track line a
   case EndOfStatement()
   case EndOfLine()
   case WhiteSpace()
+  case Comment()
 }
 
 object NTriplesLexer {
@@ -23,12 +24,7 @@ object NTriplesLexer {
   def read(in: Iterator[Char]): Iterator[NTriplesToken] = {
     val walker = Walker(in)
     val res = scala.collection.mutable.ListBuffer[NTriplesToken]()
-
-    if (walker.hasNext) {
-      walker.next
-    } else {
-      return Iterator.empty
-    }
+    walker.consume //eat first character
 
     while (walker.current.isDefined) {
       val char = walker.current.get
@@ -41,9 +37,10 @@ object NTriplesLexer {
         case '.'        => endOfStatement(walker)
         case '\n'       => endOfLine(walker)
         case '\t' | ' ' => whiteSpace(walker)
+        case '#'        => comment(walker)
         case _          => throw RuntimeException(s"Error: $char") //TODO include line + space info
       }
-      if (!token.isInstanceOf[NTriplesToken.WhiteSpace]) {
+      if (!token.isInstanceOf[NTriplesToken.WhiteSpace] && !token.isInstanceOf[NTriplesToken.Comment]) {
         res += token
       }
     }
@@ -60,6 +57,7 @@ object NTriplesLexer {
       sb.append(walker.current.get)
     }
     if (walker.current.isDefined && walker.current.get == '>') {
+      walker.consume
       NTriplesToken.IRI(sb.toString)
     } else {
       throw RuntimeException("Invalid IRI.")
@@ -68,10 +66,11 @@ object NTriplesLexer {
 
   private def typeSymbol(walker: Walker): NTriplesToken.TypeSymbol = {
     if (walker.hasNext && walker.next == '^') {
+      walker.consume
       return NTriplesToken.TypeSymbol()
     }
     else {
-      throw RuntimeException("Invalid type symbol.")
+      throw RuntimeException(s"Invalid type symbol @ ${walker.line},${walker.space}")
     }
   }
 
@@ -82,6 +81,9 @@ object NTriplesLexer {
     }
     while (walker.hasNext && (walker.next.isLetter || walker.current.get == '-')) {
       sb.append(walker.current.get)
+    }
+    if (!walker.hasNext) {
+      walker.consume
     }
     if (!sb.isEmpty) {
       NTriplesToken.LangTag(sb.toString)
@@ -121,15 +123,22 @@ object NTriplesLexer {
       sb.append(walker.current.get)
     }
     if (!sb.isEmpty) {
+      walker.consume
       NTriplesToken.BlankNodeLabel(sb.toString)
     } else {
       throw RuntimeException("Invalid blank node label.")
     }
   }
 
-  private def endOfStatement(walker: Walker): NTriplesToken.EndOfStatement = NTriplesToken.EndOfStatement()
+  private def endOfStatement(walker: Walker): NTriplesToken.EndOfStatement = {
+    walker.consume
+    NTriplesToken.EndOfStatement()
+  }
   
-  private def endOfLine(walker: Walker): NTriplesToken.EndOfLine = NTriplesToken.EndOfLine()
+  private def endOfLine(walker: Walker): NTriplesToken.EndOfLine = {
+    walker.consume
+    NTriplesToken.EndOfLine()
+  }
 
   private def whiteSpace(walker: Walker): NTriplesToken.WhiteSpace = {
     while (walker.hasNext) {
@@ -138,6 +147,18 @@ object NTriplesLexer {
         return NTriplesToken.WhiteSpace()
       }
     }
+    walker.consume
     return NTriplesToken.WhiteSpace()
+  }
+
+  def comment(walker: Walker): NTriplesToken.Comment = {
+    while (walker.hasNext) {
+      val next = walker.next
+      if (next == '\n') {
+        return NTriplesToken.Comment()
+      }
+    }
+    walker.consume
+    return NTriplesToken.Comment()
   }
 }

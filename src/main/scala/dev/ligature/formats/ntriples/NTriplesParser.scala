@@ -4,46 +4,29 @@
 
 package dev.ligature.formats.ntriples
 
-import cats.effect.IO
 import dev.ligature.{ Statement, BlankNode, Literal, Subject, Object }
-import dev.ligature.formats.common.Walker
 import dev.ligature.iris.IRI
 
 object NTriples {
-  def parseNTriples(in: Iterator[Char]): Iterator[Statement] = {
-    val walker = Walker(in)
-    if (walker.hasNext) {
-      val next = walker.next
-      next match {
-        case '#' => Iterator.empty
-        case '<' => Iterator(statement(walker))
-        case _        => throw RuntimeException(s"Error on line: $in")
-      }
-    } else {
-      Iterator.empty
+  def read(in: String): Iterator[Statement] = read(in.iterator)
+
+  def read(in: Iterator[Char]): Iterator[Statement] = {
+    val tokens = NTriplesLexer.read(in)
+    val res = scala.collection.mutable.ListBuffer[Statement]()
+    while (tokens.hasNext) {
+      res += statement(tokens)
     }
+    res.iterator
   }
 
-  def statement(walker: Walker): Statement = {
-    val subject = iri(walker)
-    val predicate = iri(walker)
-    val `object` = iri(walker)
-    Statement(subject, predicate, `object`)
+  def statement(tokens: Iterator[NTriplesToken]): Statement = {
+    val s = subject(tokens)
+    val p = iri(tokens)
+    val o = `object`(tokens)
+    Statement(s, p, o)
   }
 
-  def subject(walker: Walker): Subject = ???
-  def `object`(walker: Walker): Object = ???
-  def iri(walker: Walker): IRI = {
-    val sb = StringBuilder()
-    while (walker.hasNext) {
-      val next = walker.next
-      next match {
-        case '>' => return IRI(sb.toString).getOrElse(throw RuntimeException(s"Couldn't make IRI from ${sb.toString}"))
-        case _        => sb.append(next)
-      }
-    }
-    ??? //TODO: probably throw parser exception
-  }
-  def blankNode(walker: Walker): BlankNode = ???
-  def literal(walker: Walker): Literal = ???
+  def subject(tokens: Iterator[NTriplesToken]): Subject = ???
+  def `object`(tokens: Iterator[NTriplesToken]): Object = ???
+  def iri(tokens: Iterator[NTriplesToken]): IRI = ???
 }
