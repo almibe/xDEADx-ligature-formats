@@ -4,13 +4,18 @@
 
 package dev.ligature.formats.ntriples
 
-import dev.ligature.Statement
+import dev.ligature._
+import dev.ligature.iris.IRI
 import dev.ligature.formats.Common._
 import dev.ligature.formats.ntriples._
 import munit.FunSuite
 
 class NTriplesSerializerSuite extends FunSuite {
   test("support serializing a single statement") {
-    ???
+    val statement = Statement(IRI("http://localhost").getOrElse(???), IRI("http://localhost").getOrElse(???), IRI("http://localhost").getOrElse(???))
+    val ps = PersistedStatement(LocalName("test"), statement, DefaultGraph)
+    val res = NTriplesSerializer.serialize(List(ps).iterator).mkString
+    val expected = "<http://localhost> <http://localhost> <http://localhost> .\n"
+    assertEquals(res, expected)
   }  
 }

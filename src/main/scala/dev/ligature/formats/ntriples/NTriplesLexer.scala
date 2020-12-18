@@ -36,9 +36,10 @@ object NTriplesLexer {
         case '_'        => blankNodeLabel(walker)
         case '.'        => endOfStatement(walker)
         case '\n'       => endOfLine(walker)
+        case '\r'       => windowsEndOfLine(walker)
         case '\t' | ' ' => whiteSpace(walker)
         case '#'        => comment(walker)
-        case _          => throw RuntimeException(s"Error: $char") //TODO include line + space info
+        case _          => throw RuntimeException(s"Error: '$char'") //TODO include line + space info
       }
       if (!token.isInstanceOf[NTriplesToken.WhiteSpace] && !token.isInstanceOf[NTriplesToken.Comment]) {
         res += token
@@ -138,6 +139,15 @@ object NTriplesLexer {
   private def endOfLine(walker: Walker): NTriplesToken.EndOfLine = {
     walker.consume
     NTriplesToken.EndOfLine()
+  }
+
+  private def windowsEndOfLine(walker: Walker): NTriplesToken.EndOfLine = {
+    if (walker.hasNext && walker.next == '\n') {
+      walker.consume
+      NTriplesToken.EndOfLine()      
+    } else {
+      throw RuntimeException(s"Invalid end of line, \\r must be followed by \\n not '${walker.current}'.")
+    }
   }
 
   private def whiteSpace(walker: Walker): NTriplesToken.WhiteSpace = {

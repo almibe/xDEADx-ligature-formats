@@ -10,7 +10,7 @@ package dev.ligature.formats.common
   *
   * @param itr
   */
-final class Walker(private val itr: Iterator[Char]) { //TODO not sure if this should extend Iterator[Char] or not
+final class Walker(private val itr: Iterator[Char]) {
   private var _line: Long = 0L
   private var _space: Int = 0
   private var _current: Option[Char] = None
